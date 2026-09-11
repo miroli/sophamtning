@@ -1,0 +1,29 @@
+name: Uppdatera sophämtningskalender
+
+on:
+  schedule:
+    - cron: "17 4 * * *"   # varje dag, ca kl. 06 svensk tid
+  workflow_dispatch:        # gör att du kan köra den manuellt
+
+permissions:
+  contents: write
+
+jobs:
+  uppdatera:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Hämta datum och bygg kalendern
+        env:
+          SRV_ADRESS: ${{ secrets.SRV_ADRESS }}
+          SRV_ORT: ${{ secrets.SRV_ORT }}
+        run: python3 srv_kalender.py sophamtning.ics
+
+      - name: Spara kalendern om något har ändrats
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add sophamtning.ics
+          git diff --cached --quiet || git commit -m "Uppdatera hämtningsdatum"
+          git push
